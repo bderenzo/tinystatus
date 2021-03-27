@@ -1,0 +1,114 @@
+#!/usr/bin/env sh
+
+title=tinystatus
+timeout=10
+tmp=${tmpdir:-/tmp/tinystatus}
+useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+
+command_exists(){
+    if ! command -v "${1}" >/dev/null 2>&1; then
+        echo >&2 "Error: ${1} missing. Please install it"
+        exit 1
+    fi
+}
+
+get_element(){
+    echo "${2}" | awk -v col="${1}" -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
+}
+
+check(){
+    ctype="${1}"
+    host="${2}"
+    name="${3}"
+    expectedcode="${4}"
+
+    if [ ${ctype} = 'http' ]; then
+        statuscode="$(curl -sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")"
+    elif [ ${ctype} = 'port' ]; then
+        error="$(nc -w "${timeout}" -zv $(echo "${host}" | sed 's,:, ,') 2>&1)"
+        statuscode=$?
+        [ ${statuscode} -ne 0 ] && echo "${error}" > "${tmp}/ko/${name}.error"
+    elif [ ${ctype} = 'ping' ]; then
+        ping -W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
+        statuscode=$?
+        [ ${statuscode} -ne 0 ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error"
+    fi
+
+    # verity status and write files
+    if [ ${statuscode} -eq ${expectedcode} ]; then
+        echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
+    else
+        echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
+    fi
+    if [ -s "${tmp}/ko/${name}.error" ]; then
+        sed "${tmp}/ko/${name}.error" \
+          -e 's,curl: ([0-9]*) ,,' \
+          -e 's,.*) failed: ,,' > "${tmp}/ko/${name}.status"
+    fi
+}
+
+command_exists 'curl'
+command_exists 'nc'
+rm -r "${tmp}"
+mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
+
+while IFS='\n' read -r line; do
+    ctype="$(get_element 1 "${line}")"
+    code="$(get_element 2 "${line}")"
+    name="$(get_element 3 "${line}")"
+    host="$(get_element 4 "${line}")"
+    check "${ctype}" "${host}" "${name}" "${code}" &
+done < "${1:-checks.list}"
+wait
+
+cat << EOF
+<!DOCTYPE html><html lang="en"><head><title>${title}</title><style>
+body { font-family: segoe ui,Roboto,Oxygen-Sans,Ubuntu,Cantarell,helvetica neue,Verdana,sans-serif; }
+h1 { margin-top: 30px; }
+ul { padding: 0px; }
+li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px solid #ddd;  }
+.container { max-width: 600px; width: 100%; margin: 15px auto; }
+.panel { text-align: center; padding: 10px; border: 0px; border-radius: 5px; }
+.failed-bg  { color: white; background-color: #E25D6A; }
+.success-bg { color: white; background-color: #52B86A; }
+.failed  { color: #E25D6A; }
+.success { color: #52B86A; }
+.small { font-size: 80%; }
+.status { float: right; }
+</style></head>
+<body>
+<div class='container'>
+<h1>Global status</h1>
+EOF
+outagenb=$(find ${tmp}/ko -mindepth 1 | grep -c 'status$')
+if [ ${outagenb} -ne 0 ]; then
+    echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
+else
+    echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
+fi
+cat << EOF
+<h1>Services</h1>
+<ul>
+EOF
+for file in ${tmp}/ko/*.status; do
+    [ -e "${file}" ] || continue
+    name=$(basename "${file}" | sed 's,.status$,,')
+    status=$(cat "${file}")
+    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
+done
+for file in ${tmp}/ok/*.status; do
+    [ -e "${file}" ] || continue
+    name=$(basename "${file}" | sed 's,.status$,,')
+    echo "<li>${name} <span class='status success'>Operationnal</span></li>"
+done
+cat << EOF
+</ul>
+<p class=small> Last check: $(date +"%Y/%m/%d %H:%M:%S")</p>
+<h1>Incidents</h1>
+EOF
+sed 's|^\(.*\)$|<p>\1</p>|' "${2:-incidents.list}" 2>/dev/null || echo "<p>No incident reported yet ;)</p>"
+cat <<EOF
+</div>
+</body></html>
+EOF
+

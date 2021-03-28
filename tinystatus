@@ -2,8 +2,10 @@
 
 title=tinystatus
 timeout=10
-tmp="${tmpdir:-/tmp/tinystatus}"
+tmp='/tmp/tinystatus'
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+checkfile="${1:-checks.list}"
+incidentsfile="${2:-incidents.list}"
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -104,9 +106,15 @@ done
 cat << EOF
 </ul>
 <p class=small> Last check: $(date +"%Y/%m/%d %H:%M:%S")</p>
-<h1>Incidents</h1>
 EOF
-sed 's|^\(.*\)$|<p>\1</p>|' "${2:-incidents.list}" 2>/dev/null || echo "<p>No incident reported yet ;)</p>"
+if [ -f "${incidentsfile}" ]; then
+    echo '<h1>Incidents</h1>'
+    if [ -s "${incidentsfile}" ]; then
+        sed 's|^\(.*\)$|<p>\1</p>|' "${incidentsfile}"
+    else
+        echo '<p>No incident reported yet ;)</p>'
+    fi
+fi
 cat <<EOF
 </div>
 </body></html>

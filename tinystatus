@@ -100,7 +100,7 @@ done
 for file in ${tmp}/ok/*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
-    echo "<li>${name} <span class='status success'>Operationnal</span></li>"
+    echo "<li>${name} <span class='status success'>Operational</span></li>"
 done
 cat << EOF
 </ul>

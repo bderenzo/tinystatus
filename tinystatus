@@ -2,10 +2,10 @@
 
 title=tinystatus
 timeout=10
-tmp='/tmp/tinystatus'
-useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+tmp="$(mktemp -d)"
 checkfile="${1:-checks.list}"
 incidentsfile="${2:-incidents.list}"
+useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -51,7 +51,6 @@ check(){
 
 command_exists 'curl'
 command_exists 'nc'
-rm -r "${tmp}"
 mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
 
 while IFS='\n' read -r line; do
@@ -119,4 +118,5 @@ cat <<EOF
 </div>
 </body></html>
 EOF
+rm -r "${tmp}" 2>/dev/null
 

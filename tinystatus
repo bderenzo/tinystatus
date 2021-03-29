@@ -59,7 +59,7 @@ while IFS='\n' read -r line; do
     name="$(get_element 3 "${line}")"
     host="$(get_element 4 "${line}")"
     check "${ctype}" "${host}" "${name}" "${code}" &
-done < "${1:-checks.list}"
+done < "${1:-$checkfile}"
 wait
 
 cat << EOF

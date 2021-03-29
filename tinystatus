@@ -24,14 +24,24 @@ check(){
     name="${3}"
     expectedcode="${4}"
 
-    if [ ${ctype} = 'http' ]; then
-        statuscode="$(curl -sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")"
-    elif [ ${ctype} = 'port' ]; then
-        error="$(nc -w "${timeout}" -zv $(echo "${host}" | sed 's,:, ,') 2>&1)"
+    if [ ${ctype} = 'http4' ]; then
+        statuscode="$(curl -4sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")"
+    elif [ ${ctype} = 'http6' ]; then
+        statuscode="$(curl -6sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")"
+    elif [ ${ctype} = 'port4' ]; then
+        error="$(nc -4w "${timeout}" -zv $(echo "${host}" | sed 's, , ,') 2>&1)"
         statuscode=$?
         [ ${statuscode} -ne 0 ] && echo "${error}" > "${tmp}/ko/${name}.error"
-    elif [ ${ctype} = 'ping' ]; then
-        ping -W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
+    elif [ ${ctype} = 'port6' ]; then
+        error="$(nc -6w "${timeout}" -zv $(echo "${host}" | sed 's, , ,') 2>&1)"
+        statuscode=$?
+        [ ${statuscode} -ne 0 ] && echo "${error}" > "${tmp}/ko/${name}.error"
+    elif [ ${ctype} = 'ping4' ]; then
+        ping -4W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
+        statuscode=$?
+        [ ${statuscode} -ne 0 ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error"
+    elif [ ${ctype} = 'ping6' ]; then
+        ping -6W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
         statuscode=$?
         [ ${statuscode} -ne 0 ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error"
     fi

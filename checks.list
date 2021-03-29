@@ -1,4 +1,8 @@
-http | 200 | Google website      | https://google.com
-http | 404 | Google 404          | https://google.com/dummy
-ping | 0   | Google ping         | 8.8.8.8
-port | 0   | Google dns          | 8.8.8.8:53
+http4 | 200 | Google website v4  | https://google.com
+http6 | 200 | Google website v6  | https://google.com
+http4 | 404 | Google 404 v4      | https://google.com/dummy
+http6 | 404 | Google 404 v6      | https://google.com/dummy
+ping4 | 0   | Google ping v4     | 8.8.8.8
+ping6 | 0   | Google ping v6     | 2001:4860:4860::8888
+port4 | 0   | Google dns v4      | 8.8.8.8 53
+port6 | 0   | Google dns v6      | 2001:4860:4860::8888 53

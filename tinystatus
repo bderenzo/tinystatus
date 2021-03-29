@@ -106,7 +106,7 @@ for file in ${tmp}/ok/*.status; do
 done
 cat << EOF
 </ul>
-<p class=small> Last check: $(date +"%Y/%m/%d %H:%M:%S")</p>
+<p class=small> Last check: $(date -I'seconds')</p>
 EOF
 if [ -f "${incidentsfile}" ]; then
     echo '<h1>Incidents</h1>'

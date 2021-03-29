@@ -1,0 +1,4 @@
+http, 200, Google Website, https://google.com
+http, 404, Google 404,     https://google.com/dummy
+ping,   0, Google ping,    8.8.8.8
+port,   0, Google DNS,     8.8.8.8:53

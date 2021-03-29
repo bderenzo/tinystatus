@@ -31,15 +31,15 @@ check(){
         ping*)
             ping -W${IPv} "${timeout}" -c 1 "${host}" >/dev/null 2>&1
             statuscode=$?
-            [ ${statuscode} -ne ${expectedcode} ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
+            [ "${statuscode}" -ne "${expectedcode}" ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
         port*)
             error="$(nc -w${IPv} "${timeout}" -zv ${host} 2>&1)"
             statuscode=$?
-            [ ${statuscode} -ne ${expectedcode} ] && echo "${error}" > "${tmp}/ko/${name}.error";;
+            [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ko/${name}.error";;
     esac
 
     # verity status and write files
-    if [ ${statuscode} -eq ${expectedcode} ]; then
+    if [ "${statuscode}" -eq "${expectedcode}" ]; then
         echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
     else
         echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
@@ -55,7 +55,7 @@ command_exists 'curl'
 command_exists 'nc'
 mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
 
-while IFS='\n' read -r line; do
+while IFS="$(printf '\n')" read -r line; do
     ctype="$(get_element 1 "${line}")"
     code="$(get_element 2 "${line}")"
     name="$(get_element 3 "${line}")"
@@ -83,8 +83,8 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 <div class='container'>
 <h1>Global status</h1>
 EOF
-outagenb=$(find ${tmp}/ko -mindepth 1 | grep -c 'status$')
-if [ ${outagenb} -ne 0 ]; then
+outagenb="$(find "${tmp}/ko" -mindepth 1 | grep -c 'status$')"
+if [ "${outagenb}" -ne 0 ]; then
     echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
 else
     echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
@@ -93,13 +93,13 @@ cat << EOF
 <h1>Services</h1>
 <ul>
 EOF
-for file in ${tmp}/ko/*.status; do
+for file in "${tmp}/ko/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
     status="$(cat "${file}")"
     echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
 done
-for file in ${tmp}/ok/*.status; do
+for file in "${tmp}/ok/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
     echo "<li>${name} <span class='status success'>Operational</span></li>"

@@ -84,8 +84,10 @@ EOF
 outagenb=$(find ${tmp}/ko -mindepth 1 | grep -c 'status$')
 if [ ${outagenb} -ne 0 ]; then
     echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
+    exitcode=1
 else
     echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
+    exitcode=0
 fi
 cat << EOF
 <h1>Services</h1>
@@ -120,3 +122,5 @@ cat <<EOF
 EOF
 rm -r "${tmp}" 2>/dev/null
 
+# Allow the script execution itself to signal success, e.g. for use in healthchecks
+exit ${exitcode}

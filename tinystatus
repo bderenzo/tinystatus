@@ -53,6 +53,7 @@ check(){
 
 command_exists 'curl'
 command_exists 'nc'
+command_exists 'ping'
 mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
 
 while IFS='\n' read -r line; do

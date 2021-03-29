@@ -20,7 +20,7 @@ An example site is available [here](https://lab.bdro.fr/tinystatus/).
 To install tinystatus:
 
 * Clone the repository and go to the created directory
-* Edit the checks file `checks.list`
+* Edit the checks file `checks.csv`
 * To add incidents or maintenance, edit `incidents.list`
 * Generate status page `./tinystatus > index.html`
 * Serve the page with your favorite web server

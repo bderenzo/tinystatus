@@ -24,17 +24,19 @@ check(){
     name="${3}"
     expectedcode="${4}"
 
-    if [ ${ctype} = 'http' ]; then
-        statuscode="$(curl -sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")"
-    elif [ ${ctype} = 'port' ]; then
-        error="$(nc -w "${timeout}" -zv $(echo "${host}" | sed 's,:, ,') 2>&1)"
-        statuscode=$?
-        [ ${statuscode} -ne 0 ] && echo "${error}" > "${tmp}/ko/${name}.error"
-    elif [ ${ctype} = 'ping' ]; then
-        ping -W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
-        statuscode=$?
-        [ ${statuscode} -ne 0 ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error"
-    fi
+    IPv="$(echo "${ctype}" | grep -o '[0-9]$')"
+    case "${ctype}" in
+        http*)
+            statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")";;
+        ping*)
+            ping -W${IPv} "${timeout}" -c 1 "${host}" >/dev/null 2>&1
+            statuscode=$?
+            [ ${statuscode} -ne ${expectedcode} ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
+        port*)
+            error="$(nc -w${IPv} "${timeout}" -zv ${host} 2>&1)"
+            statuscode=$?
+            [ ${statuscode} -ne ${expectedcode} ] && echo "${error}" > "${tmp}/ko/${name}.error";;
+    esac
 
     # verity status and write files
     if [ ${statuscode} -eq ${expectedcode} ]; then
@@ -59,7 +61,7 @@ while IFS='\n' read -r line; do
     name="$(get_element 3 "${line}")"
     host="$(get_element 4 "${line}")"
     check "${ctype}" "${host}" "${name}" "${code}" &
-done < "${1:-checks.list}"
+done < "${checkfile}"
 wait
 
 cat << EOF

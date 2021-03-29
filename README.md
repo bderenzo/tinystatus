@@ -25,3 +25,17 @@ To install tinystatus:
 * Generate status page `./tinystatus > index.html`
 * Serve the page with your favorite web server
 
+## Configuration file
+
+The syntax of `checks.list` file is:
+```
+Command | Expected Code | Status Text | Host to check
+```
+
+Command can be:
+* `http` - Check http status
+* `ping` - Check ping status 
+* `port` - Check open port status
+
+There are also `http4`, `http6`, `ping4`, `ping6`, `port4`, `port6` for IPv4 or IPv6 only check.
+

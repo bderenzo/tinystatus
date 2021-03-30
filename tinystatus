@@ -5,6 +5,7 @@ timeout=10
 tmp="$(mktemp -d)"
 checkfile="${1:-checks.csv}"
 incidentsfile="${2:-incidents.txt}"
+failonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
 command_exists(){
@@ -87,10 +88,8 @@ EOF
 outagenb=$(find ${tmp}/ko -mindepth 1 | grep -c 'status$')
 if [ ${outagenb} -ne 0 ]; then
     echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
-    exitcode=1
 else
     echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
-    exitcode=0
 fi
 cat << EOF
 <h1>Services</h1>
@@ -123,7 +122,9 @@ cat <<EOF
 </div>
 </body></html>
 EOF
-rm -r "${tmp}" 2>/dev/null
 
-# Allow the script execution itself to signal success, e.g. for use in healthchecks
-exit ${exitcode}
+rm -r "${tmp}" 2>/dev/null
+if [ "${failonoutage}" = true ]; then
+    exit "${outagenb}"
+fi
+

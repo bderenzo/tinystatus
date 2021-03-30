@@ -3,7 +3,7 @@
 title=tinystatus
 timeout=10
 tmp="$(mktemp -d)"
-checkfile="${1:-checks.list}"
+checkfile="${1:-checks.csv}"
 incidentsfile="${2:-incidents.list}"
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
@@ -15,7 +15,7 @@ command_exists(){
 }
 
 get_element(){
-    echo "${2}" | awk -v col="${1}" -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
+    echo "${2}" | awk -v col="${1}" -F',' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
 }
 
 check(){

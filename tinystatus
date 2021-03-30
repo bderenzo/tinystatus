@@ -29,11 +29,11 @@ check(){
         http*)
             statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")";;
         ping*)
-            ping -W${IPv} "${timeout}" -c 1 "${host}" >/dev/null 2>&1
+            ping -${IPv}W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
             statuscode=$?
             [ "${statuscode}" -ne "${expectedcode}" ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
         port*)
-            error="$(nc -w${IPv} "${timeout}" -zv ${host} 2>&1)"
+            error="$(nc -${IPv}w "${timeout}" -zv ${host} 2>&1)"
             statuscode=$?
             [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ko/${name}.error";;
     esac

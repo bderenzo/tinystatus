@@ -53,7 +53,7 @@ check(){
 
 command_exists 'curl'
 command_exists 'nc'
-mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
+mkdir -p "${tmp}/ok" "${tmp}/ko" "${tmp}/report" || exit 1
 
 while IFS="$(printf '\n')" read -r line; do
     ctype="$(get_element 1 "${line}")"
@@ -64,7 +64,7 @@ while IFS="$(printf '\n')" read -r line; do
 done < "${checkfile}"
 wait
 
-cat << EOF
+cat << EOF >> "${tmp}/report/index.html"
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><title>${title}</title><style>
 body { font-family: segoe ui,Roboto,Oxygen-Sans,Ubuntu,Cantarell,helvetica neue,Verdana,sans-serif; }
 h1 { margin-top: 30px; }
@@ -85,11 +85,11 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 EOF
 outagenb="$(find "${tmp}/ko" -mindepth 1 | grep -c 'status$')"
 if [ "${outagenb}" -ne 0 ]; then
-    echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
+    echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>" >> "${tmp}/report/index.html"
 else
-    echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
+    echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>" >> "${tmp}/report/index.html"
 fi
-cat << EOF
+cat << EOF >> "${tmp}/report/index.html"
 <h1>Services</h1>
 <ul>
 EOF
@@ -97,28 +97,29 @@ for file in "${tmp}/ko/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
     status="$(cat "${file}")"
-    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
+    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>" >> "${tmp}/report/index.html"
 done
 for file in "${tmp}/ok/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
-    echo "<li>${name} <span class='status success'>Operational</span></li>"
+    echo "<li>${name} <span class='status success'>Operational</span></li>" >> "${tmp}/report/index.html"
 done
-cat << EOF
+cat << EOF >> "${tmp}/report/index.html"
 </ul>
 <p class=small> Last check: $(date +"%Y/%m/%d %H:%M:%S")</p>
 EOF
 if [ -f "${incidentsfile}" ]; then
-    echo '<h1>Incidents</h1>'
+    echo '<h1>Incidents</h1>' >> "${tmp}/report/index.html"
     if [ -s "${incidentsfile}" ]; then
-        sed 's|^\(.*\)$|<p>\1</p>|' "${incidentsfile}"
+        sed 's|^\(.*\)$|<p>\1</p>|' "${incidentsfile}" >> "${tmp}/report/index.html"
     else
-        echo '<p>No incident reported yet ;)</p>'
+        echo '<p>No incident reported yet ;)</p>' >> "${tmp}/report/index.html"
     fi
 fi
-cat <<EOF
+cat << EOF >> "${tmp}/report/index.html"
 </div>
 </body></html>
 EOF
+cat "${tmp}/report/index.html"
 rm -r "${tmp}" 2>/dev/null
 

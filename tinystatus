@@ -3,8 +3,9 @@
 title=tinystatus
 timeout=10
 tmp="$(mktemp -d)"
-checkfile="${1:-checks.list}"
-incidentsfile="${2:-incidents.list}"
+checkfile="${1:-checks.csv}"
+incidentsfile="${2:-incidents.txt}"
+failonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
 command_exists(){
@@ -15,7 +16,7 @@ command_exists(){
 }
 
 get_element(){
-    echo "${2}" | awk -v col="${1}" -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
+    echo "${2}" | awk -v col="${1}" -F',' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
 }
 
 check(){
@@ -53,6 +54,7 @@ check(){
 
 command_exists 'curl'
 command_exists 'nc'
+command_exists 'ping'
 mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
 
 while IFS="$(printf '\n')" read -r line; do
@@ -106,7 +108,7 @@ for file in "${tmp}/ok/"*.status; do
 done
 cat << EOF
 </ul>
-<p class=small> Last check: $(date +"%Y/%m/%d %H:%M:%S")</p>
+<p class=small> Last check: $(date -I'seconds')</p>
 EOF
 if [ -f "${incidentsfile}" ]; then
     echo '<h1>Incidents</h1>'
@@ -120,5 +122,9 @@ cat <<EOF
 </div>
 </body></html>
 EOF
+
 rm -r "${tmp}" 2>/dev/null
+if [ "${failonoutage}" = true ]; then
+    exit "${outagenb}"
+fi
 

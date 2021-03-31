@@ -25,7 +25,7 @@ check(){
     name="${3}"
     expectedcode="${4}"
 
-    IPv="$(echo "${ctype}" | grep -o '[0-9]$')"
+    IPv="$(echo "${ctype}" | grep -o '[46]$')"
     case "${ctype}" in
         http*)
             statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")";;

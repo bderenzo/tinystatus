@@ -5,6 +5,7 @@ timeout=10
 tmp="$(mktemp -d)"
 checkfile="${1:-checks.csv}"
 incidentsfile="${2:-incidents.txt}"
+customfooterfile="${3:-customfooter.html}"
 failonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
@@ -117,6 +118,9 @@ if [ -f "${incidentsfile}" ]; then
     else
         echo '<p>No incident reported yet ;)</p>'
     fi
+fi
+if [ -f "${customfooterfile}" ]; then
+    cat "${customfooterfile}"
 fi
 cat <<EOF
 </div>

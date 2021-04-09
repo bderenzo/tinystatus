@@ -5,9 +5,9 @@ tinystatus generate an html status page via shell script.
 ## Features
 
 * Parallel checks
-* HTTP, ping, port checks
+* HTTP, ping, port, dns checks
 * HTTP expected status code (401, ...)
-* Minimal dependencies (curl, nc and coreutils)
+* Minimal dependencies (curl, nc, dig and coreutils)
 * Easy configuration and customisation
 * Incident history (manual)
 
@@ -36,6 +36,7 @@ Command can be:
 * `http` - Check http status
 * `ping` - Check ping status 
 * `port` - Check open port status
+* dns`  - Check dns status
 
-There are also `http4`, `http6`, `ping4`, `ping6`, `port4`, `port6` for IPv4 or IPv6 only check.
-Note: `port4` and `port6` require OpenBSD `nc` binary.
+There are also `http4`, `http6`, `ping4`, `ping6`, `port4`, `port6, dns4, dns6` for IPv4 or IPv6 only check.
+Note: `port4` and `port6` require OpenBSD `nc` binary; dns4 and dns6 require Bind9 dig binary;

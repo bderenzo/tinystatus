@@ -4,3 +4,8 @@ http6,  200,  Google Website (IPv6),  https://google.com
 http,   404,  Google 404,             https://google.com/dummy
 ping,   0,    Google ping,            8.8.8.8
 port,   0,    Google DNS,             8.8.8.8 53
+dns6,   0,    Google DNS Test 1,      AAAA;www.google.com;2001:4860:4860::8888
+dns4,   0,    Google DNS Test 2,      AAAA;www.google.com;2001:4860:4860::8888
+dns6,   0,    Google DNS Test 3,      AA;www.google.com;8.8.8.8
+dns4,   0,    Google DNS Test 4,      AA;www.google.com;8.8.8.8
+dns,    0,    Google DNS Test 5,      AA;www.google.com;8.8.8.8

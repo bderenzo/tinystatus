@@ -19,6 +19,10 @@ get_element(){
     echo "${2}" | awk -v col="${1}" -F',' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
 }
 
+get_item(){
+    echo "${2}" | awk -v col="${1}" -F';' '{gsub(/^[ \t]+|[ \t]+$/, "", $col); print $col}'
+}
+
 check(){
     ctype="${1}"
     host="${2}"
@@ -37,6 +41,13 @@ check(){
             error="$(nc -${IPv}w "${timeout}" -zv ${host} 2>&1)"
             statuscode=$?
             [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ko/${name}.error";;
+        dns*)
+            rrtype=$(get_item 1 "${host}")
+            rrhost=$(get_item 2 "${host}")
+            dnsserver=$(get_item 3 "${host}")
+            dig +short -${IPv}u "${rrtype}" "${rrhost}" @"${dnsserver}" > "${tmp}/ko/${name}.tmp" 2>&1
+            statuscode=$?
+            [ "${statuscode}" -ne "${expectedcode}" ] &&  mv "${tmp}/ko/${name}.tmp" "${tmp}/ko/${name}.error";;
     esac
 
     # verity status and write files
@@ -55,6 +66,7 @@ check(){
 command_exists 'curl'
 command_exists 'nc'
 command_exists 'ping'
+command_exists 'dig'
 mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
 
 while IFS="$(printf '\n')" read -r line; do

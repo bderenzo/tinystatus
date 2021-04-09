@@ -1,0 +1,1 @@
+*/5 * * * * /srv/runtinystatus.sh 2> /proc/1/fd/1

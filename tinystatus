@@ -72,12 +72,13 @@ body { font-family: segoe ui,Roboto,Oxygen-Sans,Ubuntu,Cantarell,helvetica neue,
 h1 { margin-top: 30px; }
 ul { padding: 0px; }
 li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px solid #ddd;  }
-.container { max-width: 600px; width: 100%; margin: 15px auto; }
+.container { max-width: 800px; width: 100%; margin: 15px auto; }
 .panel { text-align: center; padding: 10px; border: 0px; border-radius: 5px; }
 .failed-bg  { color: white; background-color: #E25D6A; }
 .success-bg { color: white; background-color: #52B86A; }
 .failed  { color: #E25D6A; }
-.success { color: #52B86A; }
+.disrupted  { color: #E25D6A; font-weight: bold; }
+.success { color: #52B86A; font-weight: bold; }
 .small { font-size: 80%; }
 .status { float: right; }
 </style></head>
@@ -99,7 +100,7 @@ for file in "${tmp}/ko/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
     status="$(cat "${file}")"
-    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
+    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status disrupted'>Disrupted</span></li>"
 done
 for file in "${tmp}/ok/"*.status; do
     [ -e "${file}" ] || continue

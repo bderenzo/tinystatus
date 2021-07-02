@@ -8,6 +8,13 @@ incidentsfile="${2:-incidents.txt}"
 failonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
+enableLog=true
+
+function logIncidents(){
+# Basic echo out to incidents.txt 
+    echo "logging incidents"
+}
+
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
         echo >&2 "Error: ${1} missing. Please install it"
@@ -44,6 +51,9 @@ check(){
         echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
     else
         echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
+        if [ "$enableLog" -eq true ] ; then
+            logIncident 
+        fi
     fi
     if [ -s "${tmp}/ko/${name}.error" ]; then
         sed "${tmp}/ko/${name}.error" \

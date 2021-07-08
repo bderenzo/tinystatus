@@ -1,19 +1,13 @@
 #!/usr/bin/env sh
 
 title=tinystatus
+header="Global Status"
 timeout=10
 tmp="$(mktemp -d)"
 checkfile="${1:-checks.csv}"
 incidentsfile="${2:-incidents.txt}"
 failonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
-
-enableLog=true
-
-function logIncidents(){
-# Basic echo out to incidents.txt 
-    echo "logging incidents"
-}
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -51,9 +45,6 @@ check(){
         echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
     else
         echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
-        if [ "$enableLog" -eq true ] ; then
-            logIncident 
-        fi
     fi
     if [ -s "${tmp}/ko/${name}.error" ]; then
         sed "${tmp}/ko/${name}.error" \
@@ -93,7 +84,7 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 </style></head>
 <body>
 <div class='container'>
-<h1>Global status</h1>
+<h1>$header</h1>
 EOF
 outagenb="$(find "${tmp}/ko" -mindepth 1 | grep -c 'status$')"
 if [ "${outagenb}" -ne 0 ]; then

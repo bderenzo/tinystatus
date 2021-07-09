@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
 title=tinystatus
+header="Global Status"
 timeout=10
 tmp="$(mktemp -d)"
 checkfile="${1:-checks.csv}"
@@ -83,7 +84,7 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 </style></head>
 <body>
 <div class='container'>
-<h1>Global status</h1>
+<h1>${header}</h1>
 EOF
 outagenb="$(find "${tmp}/ko" -mindepth 1 | grep -c 'status$')"
 if [ "${outagenb}" -ne 0 ]; then

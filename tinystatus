@@ -29,27 +29,27 @@ check(){
     IPv="$(echo "${ctype}" | grep -o '[46]$')"
     case "${ctype}" in
         http*)
-            statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")";;
+            statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ok/${name}.error")";;
         ping*)
             ping -${IPv}W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
             statuscode=$?
-            [ "${statuscode}" -ne "${expectedcode}" ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
+            [ "${statuscode}" -ne "${expectedcode}" ] && echo 'Host unreachable' > "${tmp}/ok/${name}.error";;
         port*)
             error="$(nc -${IPv}w "${timeout}" -zv ${host} 2>&1)"
             statuscode=$?
-            [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ko/${name}.error";;
+            [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ok/${name}.error";;
     esac
 
     # verity status and write files
     if [ "${statuscode}" -eq "${expectedcode}" ]; then
         echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
     else
-        echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
+        echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
     fi
-    if [ -s "${tmp}/ko/${name}.error" ]; then
-        sed "${tmp}/ko/${name}.error" \
+    if [ -s "${tmp}/ok/${name}.error" ]; then
+        sed "${tmp}/ok/${name}.error" \
           -e 's,curl: ([0-9]*) ,,' \
-          -e 's,.*) failed: ,,' > "${tmp}/ko/${name}.status"
+          -e 's,.*) failed: ,,' > "${tmp}/ok/${name}.status"
     fi
 }
 
@@ -96,7 +96,7 @@ cat << EOF
 <h1>Services</h1>
 <ul>
 EOF
-for file in "${tmp}/ko/"*.status; do
+for file in "${tmp}/ok/"*.status; do
     [ -e "${file}" ] || continue
     name="$(basename "${file}" | sed 's,.status$,,')"
     status="$(cat "${file}")"

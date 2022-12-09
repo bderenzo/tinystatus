@@ -5,7 +5,7 @@ refresh_tinystatus() {
     echo "refresh_tinystatus: Started"
     temp_file=$(mktemp)
     if /app/tinystatus /config/checks.csv /config/incidents.txt > "$temp_file"; then
-      if [ ! -f "$temp_file" ]; then
+      if [ -f "$temp_file" ]; then
         mv "$temp_file" /usr/share/nginx/html/index.html
         echo "refresh_tinystatus: Succeeded"
       else

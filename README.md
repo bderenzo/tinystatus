@@ -23,14 +23,14 @@ An example site is available [here](https://lab.bdro.fr/tinystatus/).
 services:
   tinystatus:
     environment:
-      REFRESH_INTERVAL:360
-    image: baywolfstudios/tinyhome
+      REFRESH_INTERVAL: '30'
+    image: baywolfstudios/tinystatus
     ports:
-    - published: 8123
+    - published: 8124
       target: 80
     restart: unless-stopped
     volumes:
-      - /host/path/to/config:/config
+    - /host/path/to/config:/config:rw
 ```
 
 ## Setup

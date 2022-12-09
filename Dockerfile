@@ -1,4 +1,4 @@
-FROM nginx:1.22.1-alpine
+FROM nginx:1.23.2-alpine
 
 RUN apk add --no-cache curl netcat-openbsd
 

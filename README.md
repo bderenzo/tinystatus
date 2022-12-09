@@ -16,6 +16,23 @@ tinystatus generate an html status page via shell script.
 
 An example site is available [here](https://lab.bdro.fr/tinystatus/).
 
+## Docker Setup
+
+### compose.yml
+```
+services:
+  tinystatus:
+    environment:
+      REFRESH_INTERVAL:360
+    image: baywolfstudios/tinyhome
+    ports:
+    - published: 8123
+      target: 80
+    restart: unless-stopped
+    volumes:
+      - /host/path/to/config:/config
+```
+
 ## Setup
 
 To install tinystatus:

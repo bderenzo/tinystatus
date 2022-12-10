@@ -1,6 +1,6 @@
 FROM nginx:1.23.2-alpine
 
-RUN apk add --no-cache curl netcat-openbsd
+RUN apk add --no-cache curl netcat-openbsd grep
 
 # Copy example config
 COPY checks.csv /config/

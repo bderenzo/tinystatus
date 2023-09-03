@@ -7,6 +7,7 @@ tmp="$(mktemp -d)"
 checkfile="${1:-checks.csv}"
 incidentsfile="${2:-incidents.txt}"
 failonoutage=false
+reportonoutage=false
 useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 
 command_exists(){
@@ -101,6 +102,9 @@ for file in "${tmp}/ko/"*.status; do
     name="$(basename "${file}" | sed 's,.status$,,')"
     status="$(cat "${file}")"
     echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
+    if [ "${reportonoutage}" = true ]; then
+        echo "${name} (${status})" >&2
+    fi
 done
 for file in "${tmp}/ok/"*.status; do
     [ -e "${file}" ] || continue

@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 
-title=tinystatus
-header="Global Status"
-timeout=10
-tmp="$(mktemp -d)"
-checkfile="${1:-checks.csv}"
-incidentsfile="${2:-incidents.txt}"
-failonoutage=false
-useragent="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+# Configuration variables
+TITLE="Tinystatus"
+HEADER="Global Status"
+CHECKS_FILE="${1:-checks.csv}"
+INCIDENTS_FILE="${2:-incidents.txt}"
+OUTAGE_RC=false
+TIMEOUT=10
+USER_AGENT="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+TMP_DIR="$(mktemp -d)"
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -21,54 +22,61 @@ get_element(){
 }
 
 check(){
-    ctype="${1}"
+    check="${1}"
     host="${2}"
     name="${3}"
-    expectedcode="${4}"
+    expected_rc="${4}"
+    id="${5}"
 
-    IPv="$(echo "${ctype}" | grep -o '[46]$')"
-    case "${ctype}" in
+    ipversion="$(echo "${check}" | grep -o '[46]$')"
+    case "${check}" in
         http*)
-            statuscode="$(curl -${IPv}sSkLo /dev/null -H "${useragent}" -m "${timeout}" -w "%{http_code}" "${host}" 2> "${tmp}/ko/${name}.error")";;
+            rc="$(curl -${ipversion}sSkLo /dev/null -H "${USER_AGENT}" -m "${TIMEOUT}" -w "%{http_code}" "${host}" 2> "${TMP_DIR}/${id}.ko.info")"
+            if [ -s "${TMP_DIR}/${id}.ko.info" ]; then
+                sed -e 's,curl: ([0-9]*) ,,' -i "${TMP_DIR}/${id}.ko.info"
+            else
+                echo "Status code: ${rc}, expected: ${expected_rc}" > "${TMP_DIR}/${id}.ko.info"
+            fi;;
         ping*)
-            ping -${IPv}W "${timeout}" -c 1 "${host}" >/dev/null 2>&1
-            statuscode=$?
-            [ "${statuscode}" -ne "${expectedcode}" ] && echo 'Host unreachable' > "${tmp}/ko/${name}.error";;
+            ping -${ipversion}W "${TIMEOUT}" -c 1 "${host}" >/dev/null 2>&1
+            rc=$?
+            [ "${rc}" -ne "${expected_rc}" ] && echo 'Host unreachable' > "${TMP_DIR}/${id}.ko.info";;
         port*)
-            error="$(nc -${IPv}w "${timeout}" -zv ${host} 2>&1)"
-            statuscode=$?
-            [ "${statuscode}" -ne "${expectedcode}" ] && echo "${error}" > "${tmp}/ko/${name}.error";;
+            error="$(nc -${ipversion}w "${TIMEOUT}" -zv ${host} 2>&1)"
+            rc=$?
+            [ "${rc}" -ne "${expected_rc}" ] && echo "${error}" | sed -e 's,nc: ,,' > "${TMP_DIR}/${id}.ko.info";;
     esac
 
     # verity status and write files
-    if [ "${statuscode}" -eq "${expectedcode}" ]; then
-        echo "Status code: ${statuscode}" > "${tmp}/ok/${name}.status"
+    if [ "${rc}" -eq "${expected_rc}" ]; then
+        echo "${name}" > "${TMP_DIR}/${id}.ok"
     else
-        echo "Status code: ${statuscode}" > "${tmp}/ko/${name}.status"
-    fi
-    if [ -s "${tmp}/ko/${name}.error" ]; then
-        sed "${tmp}/ko/${name}.error" \
-          -e 's,curl: ([0-9]*) ,,' \
-          -e 's,.*) failed: ,,' > "${tmp}/ko/${name}.status"
+        echo "${name}" > "${TMP_DIR}/${id}.ko"
     fi
 }
 
+# Verify requirements
 command_exists 'curl'
 command_exists 'nc'
 command_exists 'ping'
-mkdir -p "${tmp}/ok" "${tmp}/ko" || exit 1
+mkdir -p "${TMP_DIR}" || exit 1
 
+# Execute checks
+id=0
 while IFS="$(printf '\n')" read -r line; do
-    ctype="$(get_element 1 "${line}")"
+    check="$(get_element 1 "${line}")"
     code="$(get_element 2 "${line}")"
     name="$(get_element 3 "${line}")"
     host="$(get_element 4 "${line}")"
-    check "${ctype}" "${host}" "${name}" "${code}" &
-done < "${checkfile}"
+    check "${check}" "${host}" "${name}" "${code}" "${id}" &
+    : $((id++))
+done < "${CHECKS_FILE}"
 wait
+OUTAGES_COUNT="$(ls "${TMP_DIR}/"*.ko | wc -l)"
 
+# Generate HTML
 cat << EOF
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><title>${title}</title><style>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><title>${TITLE}</title><style>
 body { font-family: segoe ui,Roboto,Oxygen-Sans,Ubuntu,Cantarell,helvetica neue,Verdana,sans-serif; }
 h1 { margin-top: 30px; }
 ul { padding: 0px; }
@@ -84,11 +92,10 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 </style></head>
 <body>
 <div class='container'>
-<h1>${header}</h1>
+<h1>${HEADER}</h1>
 EOF
-outagenb="$(find "${tmp}/ko" -mindepth 1 | grep -c 'status$')"
-if [ "${outagenb}" -ne 0 ]; then
-    echo "<ul><li class='panel failed-bg'>${outagenb} Outage(s)</li></ul>"
+if [ "${OUTAGES_COUNT}" -ne 0 ]; then
+    echo "<ul><li class='panel failed-bg'>${OUTAGES_COUNT} Outage(s)</li></ul>"
 else
     echo "<ul><li class='panel success-bg'>All Systems Operational</li></ul>"
 fi
@@ -96,25 +103,22 @@ cat << EOF
 <h1>Services</h1>
 <ul>
 EOF
-for file in "${tmp}/ko/"*.status; do
+for file in "${TMP_DIR}/"*.ko; do
     [ -e "${file}" ] || continue
-    name="$(basename "${file}" | sed 's,.status$,,')"
-    status="$(cat "${file}")"
-    echo "<li>${name} <span class='small failed'>(${status})</span><span class='status failed'>Disrupted</span></li>"
+    echo "<li>$(cat "${file}") <span class='small failed'>($(cat "${file}.info"))</span><span class='status failed'>Disrupted</span></li>"
 done
-for file in "${tmp}/ok/"*.status; do
+for file in "${TMP_DIR}/"*.ok; do
     [ -e "${file}" ] || continue
-    name="$(basename "${file}" | sed 's,.status$,,')"
-    echo "<li>${name} <span class='status success'>Operational</span></li>"
+    echo "<li>$(cat "${file}") <span class='status success'>Operational</span></li>"
 done
 cat << EOF
 </ul>
 <p class=small> Last check: $(date +%FT%T%z)</p>
 EOF
-if [ -f "${incidentsfile}" ]; then
+if [ -f "${INCIDENTS_FILE}" ]; then
     echo '<h1>Incidents</h1>'
-    if [ -s "${incidentsfile}" ]; then
-        sed 's|^\(.*\)$|<p>\1</p>|' "${incidentsfile}"
+    if [ -s "${INCIDENTS_FILE}" ]; then
+        sed 's|^\(.*\)$|<p>\1</p>|' "${INCIDENTS_FILE}"
     else
         echo '<p>No incident reported yet ;)</p>'
     fi
@@ -124,8 +128,8 @@ cat <<EOF
 </body></html>
 EOF
 
-rm -r "${tmp}" 2>/dev/null
-if [ "${failonoutage}" = true ]; then
-    exit "${outagenb}"
+# Cleanup and exit
+rm -r "${TMP_DIR}" 2>/dev/null
+if "${OUTAGE_RC}"; then
+    exit "${OUTAGES_COUNT}"
 fi
-

@@ -2,4 +2,4 @@ http,   200,  Blog,               https://yusuke.cloud
 http,   200,  Bookmark,           https://b.yusuke.cloud
 http,   200,  RSS Reader,         https://r.yusuke.cloud
 http,   200,  Password Vault,     https://v.yusuke.cloud
-ping,   0,    Linode Node, 139.162.86.65
+ping,   0,    Linode Node,        yusuke.cloud

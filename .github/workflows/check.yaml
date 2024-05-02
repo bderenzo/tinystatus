@@ -12,7 +12,6 @@ jobs:
           fetch-depth: 0
       - name: Create local changes
         run: |
-          ping -c 1 yusuke.cloud
           mkdir -p ./docs
           bash ./tinystatus > ./docs/index.html
       - name: Commit & Push changes

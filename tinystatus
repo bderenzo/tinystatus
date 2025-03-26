@@ -69,7 +69,7 @@ while IFS="$(printf '\n')" read -r line; do
     name="$(get_element 3 "${line}")"
     host="$(get_element 4 "${line}")"
     check "${check}" "${host}" "${name}" "${code}" "${id}" &
-    : $((id++))
+    id=$((id+1))
 done < "${CHECKS_FILE}"
 wait
 OUTAGES_COUNT="$(ls "${TMP_DIR}/"*.ko | wc -l)"

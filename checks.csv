@@ -1,7 +1,6 @@
-http,   200,  Blog,             https://yusuke.cloud
+http,   200,  Blog,               https://yusuke.cloud
 http,   200,  Bookmark,           https://b.yusuke.cloud
 http,   200,  RSS Reader,         https://r.yusuke.cloud
 http,   200,  Password Vault,     https://v.yusuke.cloud
 http,   200,  Wallet,             https://alby.yusuke.cloud
 http,   200,  Nostr,              https://nostr.yusuke.cloud
-

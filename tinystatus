@@ -72,7 +72,7 @@ while IFS="$(printf '\n')" read -r line; do
     id=$((id+1))
 done < "${CHECKS_FILE}"
 wait
-OUTAGES_COUNT="$(ls "${TMP_DIR}/"*.ko | wc -l)"
+OUTAGES_COUNT="$(ls "${TMP_DIR}/"*.ko 2>/dev/null | wc -l)"
 
 # Generate HTML
 cat << EOF

@@ -2,6 +2,7 @@
 
 # Configuration variables
 TITLE="Tinystatus"
+VERSION="0.2.0"
 HEADER="Global Status"
 CHECKS_FILE="${1:-checks.csv}"
 INCIDENTS_FILE="${2:-incidents.txt}"
@@ -27,6 +28,7 @@ check(){
     name="${3}"
     expected_rc="${4}"
     id="${5}"
+    details=""
 
     ipversion="$(echo "${check}" | grep -o '[46]$')"
     case "${check}" in
@@ -38,8 +40,9 @@ check(){
                 echo "Status code: ${rc}, expected: ${expected_rc}" > "${TMP_DIR}/${id}.ko.info"
             fi;;
         ping*)
-            ping -${ipversion}W "${TIMEOUT}" -c 1 "${host}" >/dev/null 2>&1
+            out=$(ping -${ipversion}W "${TIMEOUT}" -c 1 "${host}" 2>&1)
             rc=$?
+            details=$(echo ${out} | tail -1 | awk -F'/' '{print $5 " ms"}')
             [ "${rc}" -ne "${expected_rc}" ] && echo 'Host unreachable' > "${TMP_DIR}/${id}.ko.info";;
         port*)
             error="$(nc -${ipversion}w "${TIMEOUT}" -zv ${host} 2>&1)"
@@ -47,9 +50,9 @@ check(){
             [ "${rc}" -ne "${expected_rc}" ] && echo "${error}" | sed -e 's,nc: ,,' > "${TMP_DIR}/${id}.ko.info";;
     esac
 
-    # verity status and write files
     if [ "${rc}" -eq "${expected_rc}" ]; then
         echo "${name}" > "${TMP_DIR}/${id}.ok"
+        echo "${details}" >> "${TMP_DIR}/${id}.ok"
     else
         echo "${name}" > "${TMP_DIR}/${id}.ko"
     fi
@@ -104,17 +107,25 @@ cat << EOF
 <h1>Services</h1>
 <ul>
 EOF
+
 for file in "${TMP_DIR}/"*.ko; do
     [ -e "${file}" ] || continue
     echo "<li>$(cat "${file}") <span class='small failed'>($(cat "${file}.info"))</span><span class='status failed'>Disrupted</span></li>"
 done
 for file in "${TMP_DIR}/"*.ok; do
     [ -e "${file}" ] || continue
-    echo "<li>$(cat "${file}") <span class='status success'>Operational</span></li>"
+    name=$(head -1 ${file})
+    details=$(tail -1 ${file})
+    if [[ -n "$details" ]]; then
+      echo "<li>${name} <span class='status success'>Operational (${details})</span></li>"
+    else
+      echo "<li>${name} <span class='status success'>Operational</span></li>"
+    fi
 done
+
 cat << EOF
 </ul>
-<p class=small> Last check: $(date +%FT%T%z)</p>
+<p class=small>tinystatus v${VERSION} Last check: $(date +%FT%T%z)</p>
 EOF
 if [ -f "${INCIDENTS_FILE}" ]; then
     echo '<h1>Incidents</h1>'

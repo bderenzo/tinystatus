@@ -10,6 +10,7 @@ OUTAGE_RC=false
 TIMEOUT=10
 USER_AGENT="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 TMP_DIR="$(mktemp -d)"
+INCLUDE_DETAILS=1
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -115,11 +116,16 @@ done
 for file in "${TMP_DIR}/"*.ok; do
     [ -e "${file}" ] || continue
     name=$(head -1 ${file})
+    # If details contains something and its not empty, let's just wrap it in parentheses
     details=$(tail -1 ${file})
     if [[ -n "$details" ]]; then
-      echo "<li>${name} <span class='status success'>Operational (${details})</span></li>"
+        details="(${details})"
+    fi
+    # And if we are told to INCLUDE_DETAILS let's include it.
+    if (( INCLUDE_DETAILS )); then
+        echo "<li>${name} <span class='status success'>Operational ${details}</span></li>"
     else
-      echo "<li>${name} <span class='status success'>Operational</span></li>"
+        echo "<li>${name} <span class='status success'>Operational</span></li>"
     fi
 done
 

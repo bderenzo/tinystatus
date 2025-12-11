@@ -2,6 +2,7 @@
 
 # Configuration variables
 TITLE="Tinystatus"
+VERSION="0.2.0"
 HEADER="Global Status"
 CHECKS_FILE="${1:-checks.csv}"
 INCIDENTS_FILE="${2:-incidents.txt}"
@@ -45,6 +46,10 @@ check(){
             error="$(nc -${ipversion}w "${TIMEOUT}" -zv ${host} 2>&1)"
             rc=$?
             [ "${rc}" -ne "${expected_rc}" ] && echo "${error}" | sed -e 's,nc: ,,' > "${TMP_DIR}/${id}.ko.info";;
+        group*)
+            # This is a group separator.  Just indicate that in its .ok file.
+            echo ":${name}" > "${TMP_DIR}/${id}.ok"
+            return
     esac
 
     # verity status and write files
@@ -88,6 +93,7 @@ li { list-style: none; margin-bottom: 2px; padding: 5px; border-bottom: 1px soli
 .success-bg { color: white; background-color: #52B86A; }
 .failed  { color: #E25D6A; }
 .success { color: #52B86A; }
+.separator { color: #FFFFCC; }
 .small { font-size: 80%; }
 .status { float: right; }
 </style></head>
@@ -110,6 +116,16 @@ for file in "${TMP_DIR}/"*.ko; do
 done
 for file in "${TMP_DIR}/"*.ok; do
     [ -e "${file}" ] || continue
+    name=$(head -1 ${file})
+
+    # First, if the line happens to be a group separator, it will begin with :
+    # So we can print it to the html file with the correct class and then continue on.
+    if [[ "$name" == ":"* ]]; then
+      stripped_name="${name#?}"
+      echo "<li class='panel'><span class='separator'>${stripped_name}</span></li>"
+      continue
+    fi
+
     echo "<li>$(cat "${file}") <span class='status success'>Operational</span></li>"
 done
 cat << EOF

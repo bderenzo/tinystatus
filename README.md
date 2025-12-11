@@ -37,6 +37,7 @@ Command can be:
 * `http` - Check http status
 * `ping` - Check ping status 
 * `port` - Check open port status
+* `group` - Used to separate items into groups
 
 There are also `http4`, `http6`, `ping4`, `ping6`, `port4`, `port6` for IPv4 or IPv6 only check.  
 Note: `port4` and `port6` require OpenBSD `nc` binary.

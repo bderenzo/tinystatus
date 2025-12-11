@@ -29,6 +29,9 @@ check(){
     expected_rc="${4}"
     id="${5}"
 
+    # Fix id so it is 3 digits long, with leading zeroes.
+    id=$(printf "%03d" "$id")
+
     ipversion="$(echo "${check}" | grep -o '[46]$')"
     case "${check}" in
         http*)

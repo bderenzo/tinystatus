@@ -2,6 +2,7 @@
 
 # Configuration variables
 TITLE="Tinystatus"
+VERSION="0.2.0"
 HEADER="Global Status"
 CHECKS_FILE="${1:-checks.csv}"
 INCIDENTS_FILE="${2:-incidents.txt}"
@@ -9,6 +10,7 @@ OUTAGE_RC=false
 TIMEOUT=10
 USER_AGENT="User-Agent: Mozilla/5.0 (X11; Linux x86_64; Debian) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 TMP_DIR="$(mktemp -d)"
+INCLUDE_DETAILS=1
 
 command_exists(){
     if ! command -v "${1}" >/dev/null 2>&1; then
@@ -27,6 +29,7 @@ check(){
     name="${3}"
     expected_rc="${4}"
     id="${5}"
+    details=""
 
     ipversion="$(echo "${check}" | grep -o '[46]$')"
     case "${check}" in
@@ -38,8 +41,9 @@ check(){
                 echo "Status code: ${rc}, expected: ${expected_rc}" > "${TMP_DIR}/${id}.ko.info"
             fi;;
         ping*)
-            ping -${ipversion}W "${TIMEOUT}" -c 1 "${host}" >/dev/null 2>&1
+            out=$(ping -${ipversion}W "${TIMEOUT}" -c 1 "${host}" 2>&1)
             rc=$?
+            details=$(echo ${out} | tail -1 | awk -F'/' '{print $5 " ms"}')
             [ "${rc}" -ne "${expected_rc}" ] && echo 'Host unreachable' > "${TMP_DIR}/${id}.ko.info";;
         port*)
             error="$(nc -${ipversion}w "${TIMEOUT}" -zv ${host} 2>&1)"
@@ -50,6 +54,7 @@ check(){
     # verity status and write files
     if [ "${rc}" -eq "${expected_rc}" ]; then
         echo "${name}" > "${TMP_DIR}/${id}.ok"
+        echo "${details}" >> "${TMP_DIR}/${id}.ok"
     else
         echo "${name}" > "${TMP_DIR}/${id}.ko"
     fi
@@ -110,11 +115,23 @@ for file in "${TMP_DIR}/"*.ko; do
 done
 for file in "${TMP_DIR}/"*.ok; do
     [ -e "${file}" ] || continue
-    echo "<li>$(cat "${file}") <span class='status success'>Operational</span></li>"
+    name=$(head -1 ${file})
+    
+    # If details contains something and its not empty, let's just wrap it in parentheses
+    details=$(tail -1 ${file})
+    if [[ -n "$details" ]]; then
+        details="(${details})"
+    fi
+    # And if we are told to INCLUDE_DETAILS let's include it.
+    if (( INCLUDE_DETAILS )); then
+        echo "<li>${name} <span class='status success'>Operational ${details}</span></li>"
+    else
+        echo "<li>${name} <span class='status success'>Operational</span></li>"
+    fi
 done
 cat << EOF
 </ul>
-<p class=small> Last check: $(date +%FT%T%z)</p>
+<p class=small>tinystatus v${VERSION} Last check: $(date +%FT%T%z)</p>
 EOF
 if [ -f "${INCIDENTS_FILE}" ]; then
     echo '<h1>Incidents</h1>'

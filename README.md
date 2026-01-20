@@ -42,3 +42,21 @@ Command can be:
 There are also `http4`, `http6`, `ping4`, `ping6`, `port4`, `port6` for IPv4 or IPv6 only check.  
 Note: `port4` and `port6` require OpenBSD `nc` binary.
 
+## Docker
+
+Build the static webpage Docker Image (Image size is about 15.8 MB).
+```
+docker build -t tinystatus .
+```
+
+Run the Docker Container.
+```
+docker run -d -p 80:80 --name tinystatus tinystatus
+```
+
+Stop and remove the Docker Container
+
+```
+docker stop tinystatus && docker rm tinystatus
+```
+

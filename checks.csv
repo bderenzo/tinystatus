@@ -1,7 +1,8 @@
+group,  0,    Google Web,             -
 http,   200,  Google Website,         https://google.com
 http4,  200,  Google Website (IPv4),  https://google.com
 http6,  200,  Google Website (IPv6),  https://google.com
 http,   404,  Google 404,             https://google.com/dummy
-group,  0,    Group Separator,        N/A
+group,  0,    Google Services,        -
 ping,   0,    Google ping,            8.8.8.8
 port,   0,    Google DNS,             8.8.8.8 53
